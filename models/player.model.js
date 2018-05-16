@@ -4,10 +4,19 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var PlayerSchema = Schema({
-    name: String,
-    posX: Number,
-    posY: Number,
-    posZ: Number
+    userId: [{type: Schema.ObjectId, ref: 'User'}],
+    sceneName: String,
+    currentLife: Number,
+    lifes: Number,
+    inventory: [{
+        itemId: {type: Schema.ObjectId, ref: 'Inventory'},
+        amount: Number
+    }],
+    position: {
+        posX: Number,
+        posY: Number,
+        posZ: Number
+    }
     /*name: String,
     lastname: String,
     email: String,

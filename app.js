@@ -2,8 +2,13 @@
 
 var express = require('express');
 var app = express();
+var bodyParser = require('body-parser');
 
-var user_routes = require('./routes/user');
+var player_routes = require('./routes/player.route');
+var user_routes = require('./routes/user.route');
+
+app.use(bodyParser.urlencoded({extended:false}));
+app.use(bodyParser.json());
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -14,5 +19,6 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use('/api', player_routes);
 app.use('/api', user_routes);
 module.exports = app;
