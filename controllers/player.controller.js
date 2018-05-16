@@ -27,6 +27,7 @@ function newPlayer(req,res){
 }
 function playerInfo(req, res) {
     var paramsUrl = req.params;
+    console.log(paramsUrl);
     Player.findById(paramsUrl.userId).exec((err, playerInfo) => {
         if (err) {
             console.log(err);
