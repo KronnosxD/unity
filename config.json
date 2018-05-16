@@ -1,0 +1,6 @@
+{
+    "GCLOUD_PROJECT": "kalahub-204301",
+    "DATA_BACKEND": "mongodb",
+    "MONGO_URL": "mongodb://K4l44dmin:K4L4B4S3@ds123500.mlab.com:23500/kala",
+    "MONGO_COLLECTION": "player"
+}
