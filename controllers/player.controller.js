@@ -9,8 +9,11 @@ function newPlayer(req,res){
     player.userId = params.userId;
     player.sceneName= params.sceneName;
     player.currentLife= params.currentLife;
-    player.lifes= params.lifes;
-    //player.inventory= params.password;
+    player.money= params.money;
+    player.deathsCounter= params.deathsCounter;
+    player.position.posX = 0;
+    player.position.posY = 0;
+    player.position.posZ = 0;
     player.save((err, playerStored) => {
         if(err){
             return res.status(500).send({message: "El servidor no responde"});
@@ -24,7 +27,6 @@ function newPlayer(req,res){
 }
 function playerInfo(req, res) {
     var paramsUrl = req.params;
-    console.log("im here");
     Player.findById(paramsUrl.userId).exec((err, playerInfo) => {
         if (err) {
             console.log(err);
@@ -56,7 +58,7 @@ function savePosition(req,res){
                     posY: paramsBody.y,
                     posZ: paramsBody.z
                 }
-                console.log(playerInfo.position);
+
                playerInfo.save((err, playerStored) => {
                     if(err){
                         return res.status(500).send({ 
