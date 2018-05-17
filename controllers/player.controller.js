@@ -42,6 +42,8 @@ function playerInfo(req, res) {
     });
 }
 function savePosition(req,res){
+    console.log("si entro");
+    console.log(req.params.userId);
     paramsUrl = req.params;
     paramsBody = req.body;
 
