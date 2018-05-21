@@ -15,7 +15,7 @@ var PlayerSchema = Schema({
         itemId: {type: Schema.ObjectId, ref: 'Event'}
     }],
     inventory: [{
-        itemId: {type: Schema.ObjectId, ref: 'Inventory'},
+        itemId: {type: Schema.ObjectId, ref: 'Item'},
         amount: Number
     }],
     ammoBag: [{

@@ -3,7 +3,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var InventorySchema = Schema({
+var ItemSchema = Schema({
     name: String,
     description: String,
     type: {
@@ -14,4 +14,4 @@ var InventorySchema = Schema({
     
 });
 
-module.exports = mongoose.model('Inventory', InventorySchema);
+module.exports = mongoose.model('Inventory', ItemSchema);
