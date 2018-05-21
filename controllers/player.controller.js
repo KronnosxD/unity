@@ -1,27 +1,28 @@
 
 const express = require('express');
 var Player = require('../models/player.model');
+var Item = require('../models/item.model');
 
-function newPlayer(req,res){
+function newPlayer(req, res) {
     var params = req.body;
     var player = new Player();
 
     player.userId = params.userId;
-    player.sceneName= params.sceneName;
-    player.currentLife= params.currentLife;
-    player.money= params.money;
-    player.deathsCounter= params.deathsCounter;
+    player.sceneName = params.sceneName;
+    player.currentLife = params.currentLife;
+    player.money = params.money;
+    player.deathsCounter = params.deathsCounter;
     player.position.posX = 0;
     player.position.posY = 0;
     player.position.posZ = 0;
     player.save((err, playerStored) => {
-        if(err){
-            return res.status(500).send({message: "El servidor no responde"});
+        if (err) {
+            return res.status(500).send({ message: "El servidor no responde" });
         } else {
-            if(!playerStored){
-                return res.status(404).send({message: "No se pudo registrar al usuario"});
-            } else 
-            return res.status(200).send({message: "Ok.", data: playerStored})
+            if (!playerStored) {
+                return res.status(404).send({ message: "No se pudo registrar al usuario" });
+            } else
+                return res.status(200).send({ message: "Ok.", data: playerStored })
         }
     });
 }
@@ -31,17 +32,17 @@ function playerInfo(req, res) {
     Player.findById(paramsUrl.userId).exec((err, playerInfo) => {
         if (err) {
             console.log(err);
-            return res.status(500).send({ message: "El servidor no responde"})
+            return res.status(500).send({ message: "El servidor no responde" })
         } else {
-            if (!playerInfo){
-                return res.status(404).send({ message: "Información no encontrada"})
-            } else {        
-                return res.status(200).send({ message: "Información jugador: ", informacion: playerInfo})
+            if (!playerInfo) {
+                return res.status(404).send({ message: "Información no encontrada" })
+            } else {
+                return res.status(200).send({ message: "Información jugador: ", informacion: playerInfo })
             }
         }
     });
 }
-function savePosition(req,res){
+function savePosition(req, res) {
     console.log("si entro");
     console.log(req.params.userId);
     paramsUrl = req.params;
@@ -50,44 +51,132 @@ function savePosition(req,res){
     Player.findById(paramsUrl.userId).exec((err, playerInfo) => {
         if (err) {
             console.log(err);
-            return res.status(500).send({ message: "El servidor no responde"})
+            return res.status(500).send({ message: "El servidor no responde" })
         } else {
-            if (!playerInfo){
-                return res.status(404).send({ message: "Información no encontrada"})
+            if (!playerInfo) {
+                return res.status(404).send({ message: "Información no encontrada" })
             } else {
-               
-                playerInfo.position={
+
+                playerInfo.position = {
                     posX: paramsBody.x,
                     posY: paramsBody.y,
                     posZ: paramsBody.z
                 }
 
-               playerInfo.save((err, playerStored) => {
-                    if(err){
-                        return res.status(500).send({ 
+                playerInfo.save((err, playerStored) => {
+                    if (err) {
+                        return res.status(500).send({
                             message: "El servidor no responde"
                         });
-                    } else{
-                        if(!playerStored){
-                            return res.status(404).send({ 
+                    } else {
+                        if (!playerStored) {
+                            return res.status(404).send({
                                 message: "No se pudo actualizar la posición"
                             });
                         } else {
-                            return res.status(200).send({ 
+                            return res.status(200).send({
                                 informacion: playerStored
                             });
                         }
                     }
                 });
-               
+
             }
         }
     });
 }
+function addItemToInventory(req, res) {
+
+    var paramsBody = req.body;
+    var paramsUrl = req.params;
+    console.log(paramsBody.itemId);
+
+    Player.findById(paramsUrl.playerId).exec((err, playerInfo) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).send({ message: "El servidor no responde" })
+        } else {
+            if (!playerInfo) {
+                return res.status(404).send({ message: "Información no encontrada" })
+            } else {
+
+                Item.findById(paramsBody.itemId).exec((err, itemInfo) => {
+                    if (err) {
+                        console.log(err);
+                        return res.status(500).send({ message: "El servidor no responde" })
+                    } else {
+                        if (!itemInfo) {
+
+                            return res.status(404).send({ message: "Item no encontrada" })
+                        } else {
+                            if (itemInfo.type.weapon == true) {
+                                for (var x = 0; x <= playerInfo.inventory.length; x++) {
+                                    if (playerInfo.inventory[x] == undefined) {
+                                        playerInfo.inventory[x] = {
+                                            itemId: paramsBody.itemId,
+                                            amount: 1
+                                        }
+                                        playerInfo.save((err, playerStored) => {
+                           
+                                            if (err) {
+                                                return res.status(500).send({
+                                                    message: "El servidor no responde"
+                                                });
+                                            } else {
+                                                if (!playerStored) {
+                                                    return res.status(404).send({
+                                                        message: "No se pudo actualizar la posición"
+                                                    });
+                                                } else {
+                                                    return res.status(200).send({
+                                                        informacion: playerStored
+                                                    });
+                                                }
+                                            }
+                                        });
+                                    }
+
+
+                                    if (playerInfo.inventory[x].itemId == paramsBody.itemId) {
+                                        console.log(x);
+                                        playerInfo.inventory[x].amount = playerInfo.inventory[x].amount + 1;
+                                       
+                                        playerInfo.save();
+                                        
+                                        return res.status(200).send({
+                                            informacion: playerInfo
+                                        });
+                                    } 
+
+                            }
+                            
+                            if (itemInfo.type.consumible == true) {
+                                console.log("es un consumible");
+                                return res.status(200).send({ message: "es un consumible" });
+                            }
+                            if (itemInfo.type.key == true) {
+                                console.log("es un objeto clave");
+                                return res.status(200).send({ message: "es un objeto clave" });
+                            }
+                            if (itemInfo.type.cloth == true) {
+                                console.log("es ropa");
+                                return res.status(200).send({ message: "es ropa" });
+                            }
+                        }
+                    }
+                }
+                });
+            }
+        }
+    });
+
+}
+
 module.exports = {
     newPlayer,
     playerInfo,
-    savePosition
+    savePosition,
+    addItemToInventory
 }
 
 /* 

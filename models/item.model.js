@@ -4,14 +4,16 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var ItemSchema = Schema({
+
     name: String,
     description: String,
     type: {
         consumible: Boolean,
-        gun: Boolean,
-        key: Boolean
+        weapon: Boolean,
+        key: Boolean,
+        cloth: Boolean
     }
     
 });
 
-module.exports = mongoose.model('Inventory', ItemSchema);
+module.exports = mongoose.model('Item', ItemSchema);
