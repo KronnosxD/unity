@@ -1,4 +1,3 @@
-
 const express = require('express');
 var Player = require('../models/player.model');
 var Item = require('../models/item.model');
@@ -89,7 +88,7 @@ function addItemToInventory(req, res) {
 
     var paramsBody = req.body;
     var paramsUrl = req.params;
-    console.log(paramsBody.itemId);
+    var done = false;
 
     Player.findById(paramsUrl.playerId).exec((err, playerInfo) => {
         if (err) {
@@ -109,62 +108,65 @@ function addItemToInventory(req, res) {
 
                             return res.status(404).send({ message: "Item no encontrada" })
                         } else {
-                            if (itemInfo.type.weapon == true) {
-                                for (var x = 0; x <= playerInfo.inventory.length; x++) {
-                                    if (playerInfo.inventory[x] == undefined) {
-                                        playerInfo.inventory[x] = {
+                            if (itemInfo.type.weapon == true || itemInfo.type.consumible == true || itemInfo.type.key == true || itemInfo.type.cloth == true) {
+                               
+                                if(playerInfo.inventory.length==0){
+                                 
+                                    playerInfo.inventory = [{
+                                        itemId: paramsBody.itemId,
+                                        amount: 1
+                                    }]
+                                    playerInfo.save((err, playerStored) => {
+                                        if (err) {
+                                            return res.status(500).send({
+                                                message: "El servidor no responde"
+                                            });
+                                        } else {
+                                            return res.status(200).send({
+                                                message: playerStored
+                                            });
+                                        }
+                                    });
+                                } else {
+                                    var aux;
+                                    for(var x=0; x<playerInfo.inventory.length;x++){
+                                        if (playerInfo.inventory[x].itemId == paramsBody.itemId) {
+                                          
+                                            playerInfo.inventory[x].amount = playerInfo.inventory[x].amount + 1;
+                                            aux = "done";
+                                            playerInfo.save();
+                                            return res.status(200).send({
+                                                informacion: playerInfo
+                                            });
+                                        } 
+                                    }
+
+                                    if(aux==undefined ){
+                                        playerInfo.inventory.push({
                                             itemId: paramsBody.itemId,
                                             amount: 1
-                                        }
+                                        })
+                                            
+                                    
+                                    
                                         playerInfo.save((err, playerStored) => {
-                           
                                             if (err) {
                                                 return res.status(500).send({
                                                     message: "El servidor no responde"
                                                 });
                                             } else {
-                                                if (!playerStored) {
-                                                    return res.status(404).send({
-                                                        message: "No se pudo actualizar la posición"
-                                                    });
-                                                } else {
-                                                    return res.status(200).send({
-                                                        informacion: playerStored
-                                                    });
-                                                }
+                                                return res.status(200).send({
+                                                    message: playerStored
+                                                });
                                             }
                                         });
                                     }
+                                }
 
-
-                                    if (playerInfo.inventory[x].itemId == paramsBody.itemId) {
-                                        console.log(x);
-                                        playerInfo.inventory[x].amount = playerInfo.inventory[x].amount + 1;
-                                       
-                                        playerInfo.save();
-                                        
-                                        return res.status(200).send({
-                                            informacion: playerInfo
-                                        });
-                                    } 
-
-                            }
-                            
-                            if (itemInfo.type.consumible == true) {
-                                console.log("es un consumible");
-                                return res.status(200).send({ message: "es un consumible" });
-                            }
-                            if (itemInfo.type.key == true) {
-                                console.log("es un objeto clave");
-                                return res.status(200).send({ message: "es un objeto clave" });
-                            }
-                            if (itemInfo.type.cloth == true) {
-                                console.log("es ropa");
-                                return res.status(200).send({ message: "es ropa" });
+                             
                             }
                         }
                     }
-                }
                 });
             }
         }
