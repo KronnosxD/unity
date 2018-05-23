@@ -88,8 +88,13 @@ function addItemToInventory(req, res) {
 
     var paramsBody = req.body;
     var paramsUrl = req.params;
-    var done = false;
-    console.log(paramsBody.inventory)
+    var itemIdList = [];
+    for (var x = 0; x < paramsBody.inventory.length; x++) {
+        if (paramsBody.inventory[x].itemId) {
+            itemIdList.push(paramsBody.inventory[x].itemId);
+        }
+    }
+    console.log(itemIdList);
 
     Player.findById(paramsUrl.playerId).exec((err, playerInfo) => {
         if (err) {
@@ -99,80 +104,61 @@ function addItemToInventory(req, res) {
             if (!playerInfo) {
                 return res.status(404).send({ message: "Información no encontrada" })
             } else {
-                for (var z = 0; z < paramsBody.inventory.length; z++) {
-                    let index = z;
-                    console.log(z);
-                    console.log("id's: ",paramsBody.inventory[z].itemId);
-                    Item.findById(paramsBody.inventory[z].itemId).exec((err, itemInfo) => {
-                        if (err) {
-                            console.log(err);
-                            return res.status(500).send({ message: "El servidor no responde" })
+                Item.find({ '_id': itemIdList }).exec((err, itemInfo) => {
+                    if (err) {
+                        console.log(err);
+                        return res.status(500).send({ message: "El servidor no responde" })
+                    } else {
+                        if (!itemInfo) {
+                            return res.status(404).send({ message: "Item no encontrada" })
                         } else {
-                            if (!itemInfo) {
-                                return res.status(404).send({ message: "Item no encontrada" })
-                            } else {
-                                console.log("encontrado");
-                                var itemFound;
-                                console.log(itemInfo);
-                                
-                                    // New Item
-                                    
-                                    itemFound = false;
+                         
+                            var itemFound;
 
-                                    //Check inventory
-                                    for (var y = 0; y < playerInfo.inventory.length; y++) {
-                                        console.log("valor Y: ",y);
-                                        //Item found
-                                        console.log("========");
-                                        console.log(itemInfo._id);
-                                        console.log("+++++++++");
-                                        console.log(playerInfo.inventory[y].itemId);
-                                        console.log("es igual? ", String(itemInfo._id)==String(playerInfo.inventory[y].itemId));
-                                        console.log("");
-                                        console.log("");
-                                        if (String(itemInfo._id)==String(playerInfo.inventory[y].itemId)) {
-                                            console.log("item existe en inventario jugador");
-                                            itemFound = true;
-                                            console.log("cantidad a agregar: ",  paramsBody.inventory[index].amount);
-                                            playerInfo.inventory[y].amount += paramsBody.inventory[index].amount;
+                            for (var x = 0; x < itemInfo.length; x++) {
+                                // New Item
+                                itemFound = false;
+                                //Check inventory
+                                for (var y = 0; y < playerInfo.inventory.length; y++) {
+                                    //Item found
+                                    if (String(itemInfo[x]._id) == String(playerInfo.inventory[y].itemId)) {
+                                        for (var c = 0; c < paramsBody.inventory.length; c++) {
+                                            if (String(paramsBody.inventory[c].itemId) == String(playerInfo.inventory[y].itemId)) {
+                                                itemFound = true;
+                                                playerInfo.inventory[y].amount += paramsBody.inventory[c].amount;
+                                            }
                                         }
-
                                     }
+                                }
 
-                                    // Item not found
-                                    if (!itemFound) {
-                                       
-                                        //Push New Item
-                                        playerInfo.inventory.push({
-                                            itemId: itemInfo._id,
-                                            amount: paramsBody.inventory[index].amount
-                                        });
-                                        console.log("post push");
-                                    }
-
-                                    playerInfo.save((err, playerStored) => {
-                                        if (err) {
-                                            return res.status(500).send({message: err});
+                                // Item not found
+                                if (!itemFound) {
+                                    for (var c = 0; c < paramsBody.inventory.length; c++) {
+                                        if(paramsBody.inventory[c].itemId == itemInfo[x]._id){
+                                             //Push New Item
+                                            playerInfo.inventory.push({
+                                                itemId: itemInfo[x]._id,
+                                                amount: paramsBody.inventory[c].amount
+                                            });
                                         }
-                                       
-                                       
-                                    })
-
-
-
+                                    }
+                                }
                             }
+
+                            playerInfo.save((err, playerStored) => {
+                                if (err) {
+                                    return res.status(500).send({message: "El servidor no responde."});
+                                }
+                                return res.status(200).send({
+                                    message: 'ok'
+                                })
+                            })
                         }
-                    });
-                }
-                
-                return res.status(200).send({
-                    message: "ok"
-                })
-                
+                    }
+                });
             }
         }
     });
-
 }
 
 module.exports = {
