@@ -28,7 +28,7 @@ function newPlayer(req, res) {
 function playerInfo(req, res) {
     var paramsUrl = req.params;
     console.log(paramsUrl);
-    Player.findById(paramsUrl.userId).exec((err, playerInfo) => {
+    Player.findById(paramsUrl.playerId).exec((err, playerInfo) => {
         if (err) {
             console.log(err);
             return res.status(500).send({ message: "El servidor no responde" })
@@ -89,6 +89,7 @@ function addItemToInventory(req, res) {
     var paramsBody = req.body;
     var paramsUrl = req.params;
     var done = false;
+    console.log(paramsBody.inventory)
 
     Player.findById(paramsUrl.playerId).exec((err, playerInfo) => {
         if (err) {
@@ -98,76 +99,76 @@ function addItemToInventory(req, res) {
             if (!playerInfo) {
                 return res.status(404).send({ message: "Información no encontrada" })
             } else {
-
-                Item.findById(paramsBody.itemId).exec((err, itemInfo) => {
-                    if (err) {
-                        console.log(err);
-                        return res.status(500).send({ message: "El servidor no responde" })
-                    } else {
-                        if (!itemInfo) {
-
-                            return res.status(404).send({ message: "Item no encontrada" })
+                for (var z = 0; z < paramsBody.inventory.length; z++) {
+                    let index = z;
+                    console.log(z);
+                    console.log("id's: ",paramsBody.inventory[z].itemId);
+                    Item.findById(paramsBody.inventory[z].itemId).exec((err, itemInfo) => {
+                        if (err) {
+                            console.log(err);
+                            return res.status(500).send({ message: "El servidor no responde" })
                         } else {
-                            if (itemInfo.type.weapon == true || itemInfo.type.consumible == true || itemInfo.type.key == true || itemInfo.type.cloth == true) {
-                               
-                                if(playerInfo.inventory.length==0){
-                                 
-                                    playerInfo.inventory = [{
-                                        itemId: paramsBody.itemId,
-                                        amount: 1
-                                    }]
+                            if (!itemInfo) {
+                                return res.status(404).send({ message: "Item no encontrada" })
+                            } else {
+                                console.log("encontrado");
+                                var itemFound;
+                                console.log(itemInfo);
+                                
+                                    // New Item
+                                    
+                                    itemFound = false;
+
+                                    //Check inventory
+                                    for (var y = 0; y < playerInfo.inventory.length; y++) {
+                                        console.log("valor Y: ",y);
+                                        //Item found
+                                        console.log("========");
+                                        console.log(itemInfo._id);
+                                        console.log("+++++++++");
+                                        console.log(playerInfo.inventory[y].itemId);
+                                        console.log("es igual? ", String(itemInfo._id)==String(playerInfo.inventory[y].itemId));
+                                        console.log("");
+                                        console.log("");
+                                        if (String(itemInfo._id)==String(playerInfo.inventory[y].itemId)) {
+                                            console.log("item existe en inventario jugador");
+                                            itemFound = true;
+                                            console.log("cantidad a agregar: ",  paramsBody.inventory[index].amount);
+                                            playerInfo.inventory[y].amount += paramsBody.inventory[index].amount;
+                                        }
+
+                                    }
+
+                                    // Item not found
+                                    if (!itemFound) {
+                                       
+                                        //Push New Item
+                                        playerInfo.inventory.push({
+                                            itemId: itemInfo._id,
+                                            amount: paramsBody.inventory[index].amount
+                                        });
+                                        console.log("post push");
+                                    }
+
                                     playerInfo.save((err, playerStored) => {
                                         if (err) {
-                                            return res.status(500).send({
-                                                message: "El servidor no responde"
-                                            });
-                                        } else {
-                                            return res.status(200).send({
-                                                message: playerStored
-                                            });
+                                            return res.status(500).send({message: err});
                                         }
-                                    });
-                                } else {
-                                    var aux;
-                                    for(var x=0; x<playerInfo.inventory.length;x++){
-                                        if (playerInfo.inventory[x].itemId == paramsBody.itemId) {
-                                          
-                                            playerInfo.inventory[x].amount = playerInfo.inventory[x].amount + 1;
-                                            aux = "done";
-                                            playerInfo.save();
-                                            return res.status(200).send({
-                                                informacion: playerInfo
-                                            });
-                                        } 
-                                    }
+                                       
+                                       
+                                    })
 
-                                    if(aux==undefined ){
-                                        playerInfo.inventory.push({
-                                            itemId: paramsBody.itemId,
-                                            amount: 1
-                                        })
-                                            
-                                    
-                                    
-                                        playerInfo.save((err, playerStored) => {
-                                            if (err) {
-                                                return res.status(500).send({
-                                                    message: "El servidor no responde"
-                                                });
-                                            } else {
-                                                return res.status(200).send({
-                                                    message: playerStored
-                                                });
-                                            }
-                                        });
-                                    }
-                                }
 
-                             
+
                             }
                         }
-                    }
-                });
+                    });
+                }
+                
+                return res.status(200).send({
+                    message: "ok"
+                })
+                
             }
         }
     });
