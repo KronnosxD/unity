@@ -43,11 +43,11 @@ function playerInfo(req, res) {
 }
 function savePosition(req, res) {
     console.log("si entro");
-    console.log(req.params.userId);
+    console.log(req.params.playerId);
     paramsUrl = req.params;
     paramsBody = req.body;
 
-    Player.findById(paramsUrl.userId).exec((err, playerInfo) => {
+    Player.findById(paramsUrl.playerId).exec((err, playerInfo) => {
         if (err) {
             console.log(err);
             return res.status(500).send({ message: "El servidor no responde" })

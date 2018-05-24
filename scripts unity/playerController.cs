@@ -1,21 +1,31 @@
 ﻿using Newtonsoft.Json.Linq;
-using System.Collections;
-using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.IO;
 using System.Linq;
 using UnityEngine;
 
 public class playerController : MonoBehaviour {
 
-    public JArray objetos;
-
-	void Start () {
+    public JArray objetos,ammoBag,progress;
+   
+    public bool onSaveZone;
+    public GameObject menuOpciones;
+    public float life;
+    public int money, deathsCounter;
+    void Start () {
         
         objetos = new JArray();
+        ammoBag = new JArray();
+        progress = new JArray();
 	}
 
 	void Update () {
+        Debug.Log(objetos.ToString());
         createInventory();
+        if (Input.GetKeyUp(KeyCode.Escape))
+        {
+            menuOpciones.SetActive(true);
+        }
     }
     void createInventory()
     {
