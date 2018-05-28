@@ -10,7 +10,7 @@ public class playerController : MonoBehaviour {
    
     public bool onSaveZone;
     public GameObject menuOpciones;
-    public float life;
+    public int life;
     public int money, deathsCounter;
     void Start () {
         

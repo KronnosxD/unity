@@ -6,26 +6,28 @@ using UnityEngine;
 using System.Security.Cryptography;
 using System;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 public class saveZone : MonoBehaviour
 {
+    public Scene scene;
+    string localPath;
     public GameObject player;
     public JArray objetos, ammoBag, progress;
     public broker brokerConexion;
-    public string playerId;
-    string playerInfo;
+    public string playerId, userId;
     // Use this for initialization
     void Start()
     {
+        localPath = @"c:\Kala\gameData\saves\local";
+        scene = SceneManager.GetActiveScene();
         player = GameObject.FindGameObjectWithTag("Player");
         //brokerConexion = GameObject.FindGameObjectWithTag("broker").GetComponent<broker>();
         objetos = new JArray();
+        objetos = player.GetComponent<playerController>().objetos;
         ammoBag = new JArray();
         progress = new JArray();
         System.Text.UTF8Encoding Byte_Transform = new System.Text.UTF8Encoding();
-        
-
-
     }
 
     // Update is called once per frame
@@ -42,7 +44,17 @@ public class saveZone : MonoBehaviour
             player.GetComponent<playerController>().onSaveZone = true;
             if (Input.GetKeyUp(KeyCode.E))
             {
-                StartCoroutine(saveGame(player.transform.position.x, player.transform.position.y, player.transform.position.z));
+                StartCoroutine(saveGame(
+                    player.transform.position.x, 
+                    player.transform.position.y, 
+                    player.transform.position.z,
+                    player.GetComponent<playerController>().money,
+                    player.GetComponent<playerController>().deathsCounter,
+                    player.GetComponent<playerController>().life,
+                    player.GetComponent<playerController>().objetos,
+                    player.GetComponent<playerController>().progress,
+                    player.GetComponent<playerController>().ammoBag
+                    ));
 
             }
         }
@@ -51,68 +63,35 @@ public class saveZone : MonoBehaviour
     {
         player.GetComponent<playerController>().onSaveZone = false;
     }
-    IEnumerator saveGame(float x, float y, float z)
+    IEnumerator saveGame(float x, float y, float z, int dinero, int contadorMuertes, int vidaActual, 
+        JArray inventario, JArray progreso, JArray bolsaMunicion)
     {
 
-
-
-        JObject playerData = new JObject(
-
-            new JProperty("playerId", playerId),
-            new JProperty("position",
-                new JObject(
-                        new JProperty("posX", x)
-                    ),
-                new JObject(
-                        new JProperty("posY", y)
-                    ),
-                new JObject(
-                        new JProperty("posZ", z)
-                    )
-                ),
-             new JProperty("inventory",
-                 new JArray(
-                         from items in objetos
-                         select new JObject(
-                                 new JProperty("itemId", items)
-                             )
-                     )
-             ),
-             new JProperty("sceneName", "escena por defecto"),
-             new JProperty("currentLife", player.GetComponent<playerController>().life),
-             new JProperty("money", player.GetComponent<playerController>().money),
-             new JProperty("deathsCounter", player.GetComponent<playerController>().deathsCounter),
-             new JProperty("ammoBag",
-                 new JArray(
-                         from items in ammoBag
-                         select new JObject(
-                                 new JProperty("itemId", items)
-                             )
-                     )
-             ),
-             new JProperty("progress",
-                 new JArray(
-                         from items in progress
-                         select new JObject(
-                                 new JProperty("itemId", items)
-                             )
-                     )
-             )
-        );
-
-        playerInfo = playerData.ToString();
-        encriptar();
-        yield return new WaitForSeconds(2.0F);
-
-
+        try
+        {
+            saveLocal(x, y, z, dinero, contadorMuertes, vidaActual, inventario, progreso, bolsaMunicion);
+        } catch(Exception ex)
+        {
+            Debug.Log(ex);
+        }
+      
+        // CONSTRUIR API PARA GUARDAR LA PARTIDA CON TODOS LOS DATOS!
+        
         
         Debug.Log(playerId.Trim().ToString());
         WWWForm form = new WWWForm();
+        form.AddField("playerId", playerId.Trim().ToString());
+        form.AddField("currentLife", vidaActual);
+        form.AddField("money", dinero);
+        form.AddField("deathCounter", contadorMuertes);
+        form.AddField("inventory", objetos.ToString());
+        form.AddField("ammoBag", bolsaMunicion.ToString());
+        form.AddField("progress", progreso.ToString());
         form.AddField("x", x.ToString());
         form.AddField("y", y.ToString());
         form.AddField("z", z.ToString());
-        Debug.Log("http://localhost:8080/api/playerInfo/savePos/" + playerId);
-        UnityWebRequest www = UnityWebRequest.Post("http://localhost:8080/api/playerInfo/savePos/" + playerId.Trim().ToString(), form);
+        
+        UnityWebRequest www = UnityWebRequest.Post("http://localhost:8080/api/player/saveGame/" + userId.Trim().ToString(), form);
         yield return www.SendWebRequest();
 
         if (www.isNetworkError || www.isHttpError)
@@ -122,12 +101,93 @@ public class saveZone : MonoBehaviour
         }
         else
         {
+            Debug.Log("");
+            string data = www.downloadHandler.text;
+            JObject obj = JObject.Parse(data);
+
+            //string playerId = obj["informacion"]["position"]["posX"];
             Debug.Log("Posición Guardada");
         }
-       
+      
+
+      
     }
 
-    public void encriptar()
+
+    public void saveLocal(float x, float y, float z, int dinero, int contadorMuertes, int vidaActual,
+        JArray inventario, JArray progreso, JArray bolsaMunicion)
+    {
+        Boolean go = false;
+        //Comprobar si existe la carpeta con datos del juego
+        
+        if (File.Exists(localPath))
+        {
+            go = true;
+        }
+        else
+        {
+            System.IO.Directory.CreateDirectory(localPath);
+            go = true;
+        }
+        if (go)
+        {
+            DateTime fecha = DateTime.Now;
+            JObject playerData = new JObject(
+                new JProperty("userId", userId),
+                new JProperty("_id", playerId),
+                new JProperty("saveInfo", 
+                    new JObject(
+
+                    new JProperty("position",
+                        new JObject(
+                                new JProperty("posX", x)
+                            ),
+                        new JObject(
+                                new JProperty("posY", y)
+                            ),
+                        new JObject(
+                                new JProperty("posZ", z)
+                            )
+                        ),
+                     new JProperty("inventory",
+                         new JArray(
+                                 from items in objetos
+                                 select new JObject(
+                                         new JProperty("itemId", items)
+                                     )
+                             )
+                     ),
+                     new JProperty("sceneName", scene.name),
+                     new JProperty("currentLife", vidaActual),
+                     new JProperty("money", dinero),
+                     new JProperty("deathsCounter", contadorMuertes),
+                     new JProperty("ammoBag",
+                         new JArray(
+                                 from items in bolsaMunicion
+                                 select new JObject(
+                                         new JProperty("itemId", items)
+                                     )
+                             )
+                     ),
+                     new JProperty("progress",
+                         new JArray(
+                                 from items in progreso
+                                 select new JObject(
+                                         new JProperty("itemId", items)
+                                     )
+                             )
+                     ),
+                     new JProperty("saveDate", fecha)
+                     )
+                )
+
+            );
+            encryptAndSave(playerData.ToString());
+        }
+        
+    }
+
+    public void encryptAndSave(string playerInfo)
     {
         string Plain_Text;
         string Decrypted;
@@ -147,24 +207,28 @@ public class saveZone : MonoBehaviour
             Encrypted_Text = UTF.GetString(Encrypted_Bytes);
             Decrypted = decrypt_function(Encrypted_Bytes, Crypto.Key, Crypto.IV);
 
-            string path = @"c:\temp\encrypted.k4la";
-            if (!File.Exists(path))
+            int qty = (Directory.GetFiles(localPath, "*", SearchOption.AllDirectories).Length + 1);
+            string saveName = "\\save"+qty+".k4";
+            string savePath = localPath +saveName;
+            if (!File.Exists(savePath))
             {
 
-                using (StreamWriter sw = File.CreateText(path))
+                using (StreamWriter sw = File.CreateText(savePath))
                 {
                     sw.WriteLine(Encrypted_Text.ToString());
-                    Debug.Log("Encriptado guardado en " + path);
+                    Debug.Log("Encriptado guardado en " + savePath);
                 }
             }
-            string path2 = @"c:\temp\decrypted.txt";
-            if (!File.Exists(path2))
+            string path2 = @"c:\temp";
+            string saveTempName = "\\decryptedFromSave-" + qty + ".txt";
+            string saveTempPath = path2 + saveTempName;
+            if (!File.Exists(saveTempPath))
             {
 
-                using (StreamWriter sw = File.CreateText(path2))
+                using (StreamWriter sw = File.CreateText(saveTempPath))
                 {
                     sw.WriteLine(Decrypted.ToString());
-                    Debug.Log("Desencriptado guardado en " + path2);
+                    Debug.Log("Desencriptado guardado en " + saveTempPath);
                 }
             }
 

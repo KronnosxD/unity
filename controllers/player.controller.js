@@ -1,6 +1,8 @@
 const express = require('express');
 var Player = require('../models/player.model');
 var Item = require('../models/item.model');
+var moment = require('moment');
+var User = require('../models/user.model');
 
 function newPlayer(req, res) {
     var params = req.body;
@@ -41,48 +43,72 @@ function playerInfo(req, res) {
         }
     });
 }
-function savePosition(req, res) {
+function saveGame(req, res) {
+
     console.log("si entro");
-    console.log(req.params.playerId);
+    console.log("userId: ", req.params.userId);
+    console.log("playerId: ", req.body.playerId);
     paramsUrl = req.params;
     paramsBody = req.body;
 
-    Player.findById(paramsUrl.playerId).exec((err, playerInfo) => {
+    User.findById(paramsUrl.userId).exec((err, userInfo) => {
         if (err) {
-            console.log(err);
             return res.status(500).send({ message: "El servidor no responde" })
         } else {
-            if (!playerInfo) {
-                return res.status(404).send({ message: "Información no encontrada" })
+            if (!userInfo) {
+                return res.status(404).send({ message: "El usuario no existe" })
             } else {
-
-                playerInfo.position = {
-                    posX: paramsBody.x,
-                    posY: paramsBody.y,
-                    posZ: paramsBody.z
-                }
-
-                playerInfo.save((err, playerStored) => {
+                Player.findById(paramsBody.playerId).exec((err, playerData) => {
                     if (err) {
-                        return res.status(500).send({
-                            message: "El servidor no responde"
-                        });
+                        console.log(err);
+                        return res.status(500).send({ message: "El servidor no responde" })
                     } else {
-                        if (!playerStored) {
-                            return res.status(404).send({
-                                message: "No se pudo actualizar la posición"
-                            });
+                        if (!playerData) {
+                            return res.status(404).send({ message: "Información no encontrada" })
                         } else {
-                            return res.status(200).send({
-                                informacion: playerStored
+                            console.log("aqui rick");
+                            var fecha = moment();
+                            playerData.saveInfo.push({
+                                currentLife: paramsBody.life,
+                                money: paramsBody.money,
+                                deathCounter: paramsBody.deathCounter,
+                                sceneName: paramsBody.sceneName,
+                                //progress: paramsBody.progress,
+                                position: {
+                                    posX: paramsBody.x,
+                                    posY: paramsBody.y,
+                                    posZ: paramsBody.z
+                                },
+                                saveData: fecha
+                                
                             });
+                            playerData.save((err, playerStored) => {
+                                if (err) {
+                                    console.log("ups");
+                                    console.log(err);
+                                    return res.status(500).send({
+                                        message: "El servidor no responde"
+                                    });
+                                } else {
+                                    if (!playerStored) {
+                                        return res.status(404).send({
+                                            message: "No se pudo actualizar la posición"
+                                        });
+                                    } else {
+                                        return res.status(200).send({
+                                            informacion: playerStored
+                                        });
+                                    }
+                                }
+                            });
+
                         }
                     }
                 });
-
             }
         }
-    });
+    })
+
 }
 function addItemToInventory(req, res) {
 
@@ -112,7 +138,7 @@ function addItemToInventory(req, res) {
                         if (!itemInfo) {
                             return res.status(404).send({ message: "Item no encontrada" })
                         } else {
-                         
+
                             var itemFound;
 
                             for (var x = 0; x < itemInfo.length; x++) {
@@ -134,8 +160,8 @@ function addItemToInventory(req, res) {
                                 // Item not found
                                 if (!itemFound) {
                                     for (var c = 0; c < paramsBody.inventory.length; c++) {
-                                        if(paramsBody.inventory[c].itemId == itemInfo[x]._id){
-                                             //Push New Item
+                                        if (paramsBody.inventory[c].itemId == itemInfo[x]._id) {
+                                            //Push New Item
                                             playerInfo.inventory.push({
                                                 itemId: itemInfo[x]._id,
                                                 amount: paramsBody.inventory[c].amount
@@ -147,7 +173,7 @@ function addItemToInventory(req, res) {
 
                             playerInfo.save((err, playerStored) => {
                                 if (err) {
-                                    return res.status(500).send({message: "El servidor no responde."});
+                                    return res.status(500).send({ message: "El servidor no responde." });
                                 }
                                 return res.status(200).send({
                                     message: 'ok'
@@ -164,7 +190,7 @@ function addItemToInventory(req, res) {
 module.exports = {
     newPlayer,
     playerInfo,
-    savePosition,
+    saveGame,
     addItemToInventory
 }
 

@@ -7,7 +7,7 @@ var EventSchema = Schema({
     name: String,
     description: String,
     type: String,
-    triggeredDate: Date
+    triggeredDate: String
     
 });
 

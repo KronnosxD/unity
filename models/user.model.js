@@ -12,7 +12,7 @@ var UserSchema = Schema({
     country: String,
     city: String,
     password: String,
-    created: String
+    created: Date
 });
 
 module.exports = mongoose.model('User', UserSchema);
