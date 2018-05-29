@@ -45,11 +45,20 @@ function playerInfo(req, res) {
 }
 function saveGame(req, res) {
 
-    console.log("si entro");
-    console.log("userId: ", req.params.userId);
-    console.log("playerId: ", req.body.playerId);
+
     paramsUrl = req.params;
     paramsBody = req.body;
+    //console.log(paramsBody.inventory);
+    var itemIdList = [];
+    var items = JSON.parse(paramsBody.inventory);
+
+    for (var x = 0; x < items.length; x++) {
+        if (items[x].itemId) {
+
+            itemIdList.push(items[x].itemId);
+        }
+    }
+
 
     User.findById(paramsUrl.userId).exec((err, userInfo) => {
         if (err) {
@@ -68,40 +77,54 @@ function saveGame(req, res) {
                         } else {
                             console.log("aqui rick");
                             var fecha = moment();
-                            playerData.saveInfo.push({
-                                currentLife: paramsBody.life,
-                                money: paramsBody.money,
-                                deathCounter: paramsBody.deathCounter,
-                                sceneName: paramsBody.sceneName,
-                                //progress: paramsBody.progress,
-                                position: {
-                                    posX: paramsBody.x,
-                                    posY: paramsBody.y,
-                                    posZ: paramsBody.z
-                                },
-                                saveData: fecha
-                                
-                            });
-                            playerData.save((err, playerStored) => {
+
+                            Item.find({ '_id': itemIdList }).exec((err, itemInfo) => {
                                 if (err) {
-                                    console.log("ups");
                                     console.log(err);
-                                    return res.status(500).send({
-                                        message: "El servidor no responde"
-                                    });
+                                    return res.status(500).send({ message: "El servidor no responde" })
                                 } else {
-                                    if (!playerStored) {
-                                        return res.status(404).send({
-                                            message: "No se pudo actualizar la posición"
-                                        });
+                                    if (!itemInfo) {
+                                        return res.status(404).send({ message: "Item no encontrada" })
                                     } else {
-                                        return res.status(200).send({
-                                            informacion: playerStored
+                                        var aux = [];
+                                        for (var z = 0; z < items.length; z++) {
+                                            aux.push({
+                                                itemId: items[z].itemId,
+                                                amount: items[z].amount
+                                            });
+                                        }
+                                       console.log(aux);
+                                        playerData.saveInfo.push({
+                                            currentLife: paramsBody.life,
+                                            money: paramsBody.money,
+                                            deathCounter: paramsBody.deathCounter,
+                                            sceneName: paramsBody.sceneName,
+                                            inventory: aux,
+                                            position: {
+                                                posX: paramsBody.x,
+                                                posY: paramsBody.y,
+                                                posZ: paramsBody.z
+                                            },
+                                            saveData: fecha
                                         });
+                                   
+                                        
+
+
+
+
+                                        playerData.save((err, playerStored) => {
+                                            if (err) {
+                                                return res.status(500).send({ message: "El servidor no responde." });
+                                            }
+                                            return res.status(200).send({
+                                                message: 'ok'
+                                            })
+                                        })
+
                                     }
                                 }
                             });
-
                         }
                     }
                 });
