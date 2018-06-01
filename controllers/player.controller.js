@@ -107,12 +107,6 @@ function saveGame(req, res) {
                                             },
                                             saveData: fecha
                                         });
-                                   
-                                        
-
-
-
-
                                         playerData.save((err, playerStored) => {
                                             if (err) {
                                                 return res.status(500).send({ message: "El servidor no responde." });
@@ -133,6 +127,7 @@ function saveGame(req, res) {
     })
 
 }
+/* 
 function addItemToInventory(req, res) {
 
     var paramsBody = req.body;
@@ -209,12 +204,12 @@ function addItemToInventory(req, res) {
         }
     });
 }
-
+*/
 module.exports = {
     newPlayer,
     playerInfo,
-    saveGame,
-    addItemToInventory
+    saveGame
+    //addItemToInventory
 }
 
 /* 
