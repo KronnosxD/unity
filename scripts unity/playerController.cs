@@ -10,6 +10,7 @@ public class playerController : MonoBehaviour {
    
     public bool onSaveZone;
     public GameObject menuOpciones;
+    public bool onPause;
     public int life;
     public int money, deathsCounter;
     void Start () {
@@ -20,11 +21,12 @@ public class playerController : MonoBehaviour {
 	}
 
 	void Update () {
-        Debug.Log(objetos.ToString());
+        //Debug.Log(objetos.ToString());
         createInventory();
         if (Input.GetKeyUp(KeyCode.Escape))
         {
-            menuOpciones.SetActive(true);
+            onPause = !onPause;
+            menuOpciones.SetActive(onPause);
         }
     }
     void createInventory()

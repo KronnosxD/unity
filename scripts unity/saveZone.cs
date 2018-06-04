@@ -7,18 +7,21 @@ using System.Security.Cryptography;
 using System;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
+using System.Text;
 
 public class saveZone : MonoBehaviour
 {
     public Scene scene;
     string localPath;
-    public GameObject player;
+    public GameObject player, fakeBroker;
     public JArray objetos, ammoBag, progress;
     public broker brokerConexion;
     public string playerId, userId;
+
     // Use this for initialization
     void Start()
     {
+        fakeBroker = GameObject.FindGameObjectWithTag("fakeBroker");
         localPath = @"c:\Kala\gameData\saves\local";
         scene = SceneManager.GetActiveScene();
         player = GameObject.FindGameObjectWithTag("Player");
@@ -74,9 +77,9 @@ public class saveZone : MonoBehaviour
         {
             Debug.Log(ex);
         }
-      
+
         // CONSTRUIR API PARA GUARDAR LA PARTIDA CON TODOS LOS DATOS!
-        
+        Debug.Log(objetos);
         
         Debug.Log(playerId.Trim().ToString());
         WWWForm form = new WWWForm();
@@ -136,182 +139,101 @@ public class saveZone : MonoBehaviour
                 new JProperty("userId", userId),
                 new JProperty("_id", playerId),
                 new JProperty("saveInfo", 
-                    new JObject(
-
-                    new JProperty("position",
+                    new JArray(
                         new JObject(
-                                new JProperty("posX", x)
-                            ),
-                        new JObject(
-                                new JProperty("posY", y)
-                            ),
-                        new JObject(
-                                new JProperty("posZ", z)
-                            )
-                        ),
-                     new JProperty("inventory",
-                         new JArray(
-                                 from items in objetos
-                                 select new JObject(
-                                         new JProperty("itemId", items)
+                            new JProperty("position",
+                                new JObject(
+                                        new JProperty("posX", x)
+                                    ),
+                                new JObject(
+                                        new JProperty("posY", y)
+                                    ),
+                                new JObject(
+                                        new JProperty("posZ", z)
+                                    )
+                                ),
+                             new JProperty("inventory",
+                                 new JArray(
+                                         from items in objetos
+                                         select new JObject(
+                                                 new JProperty("itemId", items)
+                                             )
                                      )
-                             )
-                     ),
-                     new JProperty("sceneName", scene.name),
-                     new JProperty("currentLife", vidaActual),
-                     new JProperty("money", dinero),
-                     new JProperty("deathsCounter", contadorMuertes),
-                     new JProperty("ammoBag",
-                         new JArray(
-                                 from items in bolsaMunicion
-                                 select new JObject(
-                                         new JProperty("itemId", items)
+                             ),
+                             new JProperty("sceneName", scene.name),
+                             new JProperty("currentLife", vidaActual),
+                             new JProperty("money", dinero),
+                             new JProperty("deathsCounter", contadorMuertes),
+                             new JProperty("ammoBag",
+                                 new JArray(
+                                         from items in bolsaMunicion
+                                         select new JObject(
+                                                 new JProperty("itemId", items)
+                                             )
                                      )
-                             )
-                     ),
-                     new JProperty("progress",
-                         new JArray(
-                                 from items in progreso
-                                 select new JObject(
-                                         new JProperty("itemId", items)
+                             ),
+                             new JProperty("progress",
+                                 new JArray(
+                                         from items in progreso
+                                         select new JObject(
+                                                 new JProperty("itemId", items)
+                                             )
                                      )
-                             )
-                     ),
-                     new JProperty("saveDate", fecha)
-                     )
+                             ),
+                             new JProperty("saveDate", fecha)
+                        )
+                    )
                 )
-
             );
-            encryptAndSave(playerData.ToString());
-        }
-        
-    }
 
-    public void encryptAndSave(string playerInfo)
-    {
-        string Plain_Text;
-        string Decrypted;
-        string Encrypted_Text;
-        byte[] Encrypted_Bytes;
-
-
-        RijndaelManaged Crypto = new RijndaelManaged();
-
-        System.Text.UTF8Encoding UTF = new System.Text.UTF8Encoding();
-
-        Plain_Text = playerInfo;
-
-        try
-        {
-            Encrypted_Bytes = encrypt_function(Plain_Text, Crypto.Key, Crypto.IV);
-            Encrypted_Text = UTF.GetString(Encrypted_Bytes);
-            Decrypted = decrypt_function(Encrypted_Bytes, Crypto.Key, Crypto.IV);
-
-            int qty = (Directory.GetFiles(localPath, "*", SearchOption.AllDirectories).Length + 1);
-            string saveName = "\\save"+qty+".k4";
-            string savePath = localPath +saveName;
-            if (!File.Exists(savePath))
+            string encriptado = AvoEx.AesEncryptor.Encrypt(playerData.ToString());
+            string desencriptado = AvoEx.AesEncryptor.DecryptString(encriptado);
+            try
             {
 
-                using (StreamWriter sw = File.CreateText(savePath))
+                // Open the text file using a stream reader.
+
+
+                int qty = (Directory.GetFiles(localPath, "*", SearchOption.AllDirectories).Length + 1);
+                string saveName = "\\save" + qty + ".k4";
+                string savePath = localPath + saveName;
+                if (!File.Exists(savePath))
                 {
-                    sw.WriteLine(Encrypted_Text.ToString());
-                    Debug.Log("Encriptado guardado en " + savePath);
+
+                    using (StreamWriter sw = File.CreateText(savePath))
+                    {
+                        sw.WriteLine(encriptado);
+                        Debug.Log("Encriptado guardado en " + savePath);
+                    }
                 }
+
+
+                string path2 = @"c:\temp";
+                string saveTempName = "\\decryptedFromSave-" + qty + ".txt";
+                string saveTempPath = path2 + saveTempName;
+                if (!File.Exists(saveTempPath))
+                {
+
+                    using (StreamWriter sw = File.CreateText(saveTempPath))
+                    {
+                        sw.WriteLine(desencriptado);
+                        Debug.Log("Desencriptado guardado en " + saveTempPath);
+                    }
+                }
+
+
             }
-            string path2 = @"c:\temp";
-            string saveTempName = "\\decryptedFromSave-" + qty + ".txt";
-            string saveTempPath = path2 + saveTempName;
-            if (!File.Exists(saveTempPath))
+            catch (Exception ex)
             {
-
-                using (StreamWriter sw = File.CreateText(saveTempPath))
-                {
-                    sw.WriteLine(Decrypted.ToString());
-                    Debug.Log("Desencriptado guardado en " + saveTempPath);
-                }
+                Debug.Log(ex);
             }
 
 
-        }
-        catch(Exception e)
-        {
-            Debug.Log(e);
-        }
-    }
-    private static byte[] encrypt_function(string Plain_Text, byte[] Key, byte[] IV)
-    {
-        RijndaelManaged Crypto = null;
-        MemoryStream MemStream = null;
-
-        ICryptoTransform Encryptor = null;
-        CryptoStream Crypto_Stream = null;
-
-        System.Text.UTF8Encoding Byte_Transform = new System.Text.UTF8Encoding();
-        byte[] PlainBytes = Byte_Transform.GetBytes(Plain_Text);
-        try
-        {
-            Crypto = new RijndaelManaged();
-            Crypto.Key = Key;
-            Debug.Log("KEY: "+Crypto.Key.ToString());
-            Crypto.IV = IV;
-            MemStream = new MemoryStream();
-
-            Encryptor = Crypto.CreateEncryptor(Crypto.Key, Crypto.IV);
-
-            Crypto_Stream = new CryptoStream(MemStream, Encryptor, CryptoStreamMode.Write);
-
-            Crypto_Stream.Write(PlainBytes, 0, PlainBytes.Length);
-
 
         }
-        finally
-        {
-            if (Crypto != null)
-                Crypto.Clear();
-
-            Crypto_Stream.Close();
-
-
-        }
-        return MemStream.ToArray();
-
-        
-        }
-    private static string decrypt_function(byte[] Cipher_Text, byte[] Key, byte[] IV)
-    {
-        RijndaelManaged Crypto = null;
-            MemoryStream MemStream = null;
-            ICryptoTransform Decryptor = null;
-            CryptoStream Crypto_Stream = null;
-            StreamReader Stream_Read = null;
-        String Plain_Text;
-        try
-        {
-                 Crypto = new RijndaelManaged();
-                  Crypto.Key = Key;
-                 Crypto.IV = IV;
-                MemStream = new MemoryStream(Cipher_Text);
-
-            Decryptor = Crypto.CreateDecryptor(Crypto.Key, Crypto.IV);
-
-            Crypto_Stream = new CryptoStream(MemStream, Decryptor, CryptoStreamMode.Read);
-
-            Stream_Read = new StreamReader(Crypto_Stream);
-                 Plain_Text = Stream_Read.ReadToEnd();
-
-
-        }
-        finally
-        {
-                if (Crypto != null)
-                    Crypto.Clear();
-                MemStream.Flush();
-                MemStream.Close();
-
-        }
-        return Plain_Text;
 
     }
-
+    
+    
+    
 }

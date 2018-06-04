@@ -1,9 +1,11 @@
-﻿using System.Collections;
+﻿using Newtonsoft.Json.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class itemController : MonoBehaviour {
     public string itemId;
+    public int cantidad;
     public bool tocandoAlJugador;
     public playerController player;
 	// Use this for initialization
@@ -22,7 +24,11 @@ public class itemController : MonoBehaviour {
         {
             if (Input.GetKeyUp(KeyCode.E))
             {
-                player.objetos.Add(itemId);
+                JObject items = new JObject(
+                                new JProperty("itemId", itemId),
+                                new JProperty("amount", cantidad)
+                               );
+                player.objetos.Add(items);
                 gameObject.SetActive(false);
             }
         }
