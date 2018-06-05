@@ -48,9 +48,9 @@ public class saveZone : MonoBehaviour
             if (Input.GetKeyUp(KeyCode.E))
             {
                 StartCoroutine(saveGame(
-                    player.transform.position.x, 
-                    player.transform.position.y, 
-                    player.transform.position.z,
+                    (float)Math.Round(player.transform.position.x,4), 
+                    (float)Math.Round(player.transform.position.y,4),
+                    (float)Math.Round(player.transform.position.z,4),
                     player.GetComponent<playerController>().money,
                     player.GetComponent<playerController>().deathsCounter,
                     player.GetComponent<playerController>().life,
@@ -58,8 +58,9 @@ public class saveZone : MonoBehaviour
                     player.GetComponent<playerController>().progress,
                     player.GetComponent<playerController>().ammoBag
                     ));
-
+               
             }
+            
         }
     }
     void OnTriggerExit(Collider other)
