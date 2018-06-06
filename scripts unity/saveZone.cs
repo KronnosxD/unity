@@ -31,6 +31,30 @@ public class saveZone : MonoBehaviour
         ammoBag = new JArray();
         progress = new JArray();
         System.Text.UTF8Encoding Byte_Transform = new System.Text.UTF8Encoding();
+
+        string tempPath = @"c:\temp";
+        try
+        {
+            // Determine whether the directory exists.
+            if (Directory.Exists(tempPath))
+            {
+                Debug.Log("Exiset");
+                return;
+            }
+
+            // Try to create the directory.
+            DirectoryInfo di = Directory.CreateDirectory(tempPath);
+            Debug.Log("creado temp");
+
+            // Delete the directory.
+
+
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e);
+        }
+        finally { }
     }
 
     // Update is called once per frame
@@ -121,6 +145,7 @@ public class saveZone : MonoBehaviour
     public void saveLocal(float x, float y, float z, int dinero, int contadorMuertes, int vidaActual,
         JArray inventario, JArray progreso, JArray bolsaMunicion)
     {
+        Debug.Log("el buen dinero: " + dinero);
         Boolean go = false;
         //Comprobar si existe la carpeta con datos del juego
         

@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using System;
 
 public class playerController : MonoBehaviour {
 
@@ -18,7 +19,32 @@ public class playerController : MonoBehaviour {
         objetos = new JArray();
         ammoBag = new JArray();
         progress = new JArray();
-	}
+
+        string path = @"c:\Kala\gameData\saves\local";
+   
+        try
+        {
+            // Determine whether the directory exists.
+            if (Directory.Exists(path))
+            {
+                Debug.Log("Exiset");
+                return;
+            }
+
+            // Try to create the directory.
+            DirectoryInfo di = Directory.CreateDirectory(path);
+            Debug.Log("creado saves");
+
+            // Delete the directory.
+           
+            
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e);
+        }
+        finally { }
+    }
 
 	void Update () {
         //Debug.Log(objetos.ToString());

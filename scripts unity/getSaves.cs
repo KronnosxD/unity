@@ -9,6 +9,7 @@ public class getSaves : MonoBehaviour {
     public int qty;
     public string[] datos, partidasLocales;
     public JObject[] obj;
+    public int aux;
 
 
     // Use this for initialization
@@ -27,6 +28,7 @@ public class getSaves : MonoBehaviour {
     public void getAndReadLocalSaves()
     {
         qty = (Directory.GetFiles(savesRoute, "*.k4", SearchOption.AllDirectories).Length);
+        Debug.Log("cantidas de saves en el disco: "+ qty);
         obj = new JObject[qty];
         datos = new string[qty];
         partidasLocales = new string[qty];
@@ -36,22 +38,25 @@ public class getSaves : MonoBehaviour {
             for (int x = 0; x < (Directory.GetFiles(savesRoute, "*.k4", SearchOption.AllDirectories).Length); x++)
             {
                 // Open the text file using a stream reader.
+                Debug.Log("por acá po: "+savesRoute + "\\save" + (x + 1) + ".k4");
                 using (StreamReader sr = new StreamReader(savesRoute+"\\save" + (x+1) + ".k4"))
                 {
 
                     // Read the stream to a string, and write the string to the console.
                     datos[x] = sr.ReadToEnd();
+                    Debug.Log("Paso 1): " + datos[x]);
                     partidasLocales[x] = AvoEx.AesEncryptor.DecryptString(datos[x]);
-                    
+                    Debug.Log("Paso 2): " + partidasLocales[x]);
                     obj[x] = JObject.Parse(partidasLocales[x]);
- 
+                    Debug.Log("Paso 3: " + obj[x]);
                 }
 
 
             }
-  
 
-            for (var y=0; y<partidasLocales.Length; y++)
+            aux = partidasLocales.Length;
+            Debug.Log("largo de aux: " + aux);
+            for (var y=aux-1; y>=0; y--)
             {
 
                 var copiaPartida = Instantiate(partidaTemplate);
@@ -61,6 +66,7 @@ public class getSaves : MonoBehaviour {
                 copiaPartida.GetComponent<savegameData>().indexPartida = y;
                 copiaPartida.GetComponent<savegameData>().vidaActual = (int)obj[y]["saveInfo"][0]["currentLife"];
                 copiaPartida.GetComponent<savegameData>().contadorMuertes = (int)obj[y]["saveInfo"][0]["deathsCounter"];
+                copiaPartida.GetComponent<savegameData>().dinero = (int)obj[y]["saveInfo"][0]["money"];
 
                 copiaPartida.GetComponent<savegameData>().newPlayerPosition.x = (float)obj[y]["saveInfo"][0]["position"][0]["posX"];
                 copiaPartida.GetComponent<savegameData>().newPlayerPosition.y = (float)obj[y]["saveInfo"][0]["position"][1]["posY"];
